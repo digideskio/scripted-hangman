@@ -1,89 +1,125 @@
-var guesses = [];
-var misses = 0;
-var word = "ABALONE";
+/*global
+$
+*/
 
-function updateWord() {
-  $("#word").empty();
+// ================== globals ==================
+var word = null;
+var correct = null;
+var wrong = null;
+
+var $message = null;
+var $word = null;
+var $hangman = null;
+var $newGame = null;
+
+// ================== view helpers ==================
+var updateHangman = function (numWrong) {
+  $hangman.attr('src', 'Hangman-' + numWrong + '.png');
+};
+
+var getDisplayedWord = function (word, correct) {
+  var displayedWord = '';
   for (var i = 0; i < word.length; i++) {
-    var letter = word.charAt(i);
-    if (guesses.includes(letter)) {
-      $("#word").append(letter);
-    } else {
-      $("#word").append("_");
+    var correctLetter = word.charAt(i);
+    var displayedLetter = '_';
+    if (correct.includes(correctLetter)) {
+      displayedLetter = correctLetter;
     }
+    displayedWord = displayedWord + displayedLetter;
   }
-}
+  return displayedWord;
+};
 
-function updateHangman() {
-  $("#hangman").attr("src", "Hangman-" + misses + ".png");
-}
+var displayMessage = function (message) {
+  $message.show();
+  $message.text(message);
+};
 
-function hasWon() {
-  for(var i = 0; i < word.length; i++) {
-    var letter = word.charAt(i);
-    if (guesses.includes(letter) == false) {
-      return false;
-    }
-  }
-  return true;
-}
+// ================== game logic ==================
 
-function hasLost() {
-  if (misses < 6) {
-    return false;
+var endGame = function (message) {
+  $newGame.show();
+  displayMessage(message);
+};
+
+var guessLetter = function (guess) {
+  $message.hide();
+  if (wrong.includes(guess) || correct.includes(guess)) {
+    onAlreadyGuessed(guess);
+  } else if (word.match(guess)) {
+    onCorrect(guess);
   } else {
-    return true;
+    onWrong(guess);
   }
-}
+};
 
-function guessLetter(letter) {
-  letter = letter.toUpperCase();
+// ================== game actions ==================
 
-  if (guesses.includes(letter)) {
-    $("#message").text("You already guessed the letter '" + letter + "'!");
-    $("#message").show();
-    return;
+var onAlreadyGuessed = function (letter) {
+  displayMessage('You already guessed ' + letter);
+};
+
+var onWrong = function (letter) {
+  wrong.push(letter);
+  updateHangman(wrong.length);
+};
+
+var onCorrect = function (letter) {
+  correct.push(letter);
+  var displayedWord = getDisplayedWord(word, correct);
+  $word.text(displayedWord);
+  if (displayedWord === word) {
+    onWon();
+  } else if (wrong.length >= 6) {
+    onLose();
   }
+};
 
-  guesses.push(letter);
+var onWon = function () {
+  endGame('You Won!');
+};
 
-  if (word.includes(letter) == false) {
-    misses++;
-  }
-}
+var onLose = function () {
+  endGame('You Lose :(');
+};
 
-function newGame() {
-  guesses = [];
-  misses = 0;
-  $("#message").hide();
-  $("#newgame").hide();
-  updateWord();
-  updateHangman();
-}
+// ================== view actions ===============
 
-$(document).ready(function() {
-  newGame();
+var onKeyPress = function (event) {
+  var guess = event.key.toUpperCase();
+  guessLetter(guess);
+};
 
-  $("#newgame").click(newGame);
+var onNewGameClick = function () {
+  reset();
+};
 
-  $(document).keypress(function(event) {
-    $("#message").empty();
-    $("#message").hide();
+// ================== game ==================
 
-    guessLetter(event.key);
+var reset = function () {
+  correct = [];
+  wrong = [];
+  word = 'ABALONE';
+  $message.hide();
+  $newGame.hide();
+  var displayedWord = getDisplayedWord(word, correct);
+  $word.text(displayedWord);
+};
 
-    updateWord();
-    updateHangman();
+var setup = function () {
+  $word = $('#word');
+  $message = $('#message');
+  $newGame = $('#newGame');
+  $hangman = $('#hangman');
+  $(document).keypress(onKeyPress);
+  $newGame.click(onNewGameClick);
+};
 
-    if (hasWon()) {
-      $("#message").text("You won!");
-      $("#message").show();
-      $("#newgame").show();
-    }
-    if (hasLost()) {
-      $("#message").text("You lost!");
-      $("#message").show();
-      $("#newgame").show();
-    }
-  });
-});
+// ================== ready ==================
+
+var onReady = function () {
+  setup();
+  reset();
+};
+
+$(document).ready(onReady);
