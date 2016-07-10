@@ -22,7 +22,7 @@ var getDisplayedWord = function (word, correct) {
   for (var i = 0; i < word.length; i++) {
     var correctLetter = word.charAt(i);
     var displayedLetter = '_';
-    if (correct.includes(correctLetter)) {
+    if (correct.indexOf(correctLetter) !== -1) {
       displayedLetter = correctLetter;
     }
     displayedWord = displayedWord + displayedLetter;
@@ -44,7 +44,7 @@ var endGame = function (message) {
 
 var guessLetter = function (guess) {
   $message.hide();
-  if (wrong.includes(guess) || correct.includes(guess)) {
+  if (wrong.indexOf(guess) !== -1 || correct.indexOf(guess) !== -1) {
     onAlreadyGuessed(guess);
   } else if (word.match(guess)) {
     onCorrect(guess);
